@@ -1,0 +1,50 @@
+import numpy as np
+import cvxpy as cp
+import matplotlib.pyplot as plt
+
+# Problem data.
+y = np.genfromtxt('C:\Users\Administrator\Desktop\qly.txt')*2-1
+
+y = y.reshape(len(y),1)
+x = np.genfromtxt('C:\Users\Administrator\Desktop\qlx.txt')
+m = x.shape[0]
+n = x.shape[1]
+C = 1
+
+
+
+# Construct the problem.
+w = cp.Variable((n,1))
+b = cp.Variable()
+xi = cp.Variable((m,1))
+a=cp.Variable((m,1))
+
+
+objective = cp.Minimize(0.5*cp.norm(w)**2)
+print 0.5*cp.norm(w)**2
+constraints = [cp.multiply(y, x*w + b) >= 1]
+prob = cp.Problem(objective, constraints)
+
+# The optimal objective value is returned by `prob.solve()`.
+# The optimal value for x is stored in `x.value`.
+result = prob.solve()
+print(w.value)
+# The optimal Lagrange multiplier for a constraint is stored in
+# `constraint.dual_value`.
+print(prob.value)
+#print(constraints[0].dual_value)
+#print(0.5*np.linalg.norm(w.value, ord =2)**2+C*np.sum(xi.value))
+
+xp = np.linspace(min(x[:,0]), max(x[:,0]), 100)
+yp = - (w.value[0]*xp + b.value)/w.value[1]
+yp1 = np.array(- (w.value[0]*xp + b.value - C)/w.value[1] )# margin boundary for support vectors for y=1
+yp0 = np.array(- (w.value[0]*xp + b.value + C)/w.value[1] )# margin boundary for support vectors for y=0
+
+idx0 = np.where(y==-1) 
+idx1 = np.where(y==1)
+
+plt.plot(x[idx0, 0], x[idx0, 1], 'rx')
+plt.plot(x[idx1, 0], x[idx1, 1], 'go')
+plt.plot(xp, yp, '-b', xp, yp1, '--g', xp, yp0, '--r')
+plt.title('decision boundary for a linear SVM classifier with C={}'.format(C) )
+plt.show()
